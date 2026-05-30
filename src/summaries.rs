@@ -8,18 +8,18 @@ pub struct SummaryItem {
     #[pyo3(get)]
     #[serde(rename = "actionDate")]
     pub action_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "actionDesc")]
     pub action_desc: Option<String>,
-    
+
     #[pyo3(get)]
     pub text: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "versionCode")]
     pub version_code: Option<String>,

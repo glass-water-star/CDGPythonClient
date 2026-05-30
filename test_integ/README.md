@@ -6,8 +6,12 @@ These tests call the real Congress.gov API and validate the returned data.
 
 1. Get an API key from [api.data.gov](https://api.data.gov/signup/)
 
-2. Set the environment variable:
+2. Add the API key to the repository `.env` file or export it directly:
    ```bash
+   # .env
+   CONGRESS_API_KEY=your_api_key_here
+
+   # or shell
    export CONGRESS_API_KEY=your_api_key_here
    ```
 
@@ -15,17 +19,22 @@ These tests call the real Congress.gov API and validate the returned data.
 
 Run all integration tests:
 ```bash
-pytest tests/test_integ/ -v
+pytest test_integ/ -v
 ```
+
+The integration fixtures cache identical live requests for the duration of the
+test session and apply a small delay between unique live calls by default. This
+keeps the suite closer to a coverage pass than a load test while still hitting
+real endpoints.
 
 Run specific test file:
 ```bash
-pytest tests/test_integ/test_bills.py -v
+pytest test_integ/test_bills.py -v
 ```
 
 Run specific test:
 ```bash
-pytest tests/test_integ/test_bills.py::TestBillsList::test_list_bills -v
+pytest test_integ/test_bills.py::TestBillsList::test_list_bills -v
 ```
 
 ## Test Coverage
@@ -39,4 +48,18 @@ The integration tests cover:
 
 ## Note
 
-If the `CONGRESS_API_KEY` environment variable is not set, all integration tests will be automatically skipped.
+If neither `CONGRESS_API_KEY` nor `API_KEY` is set in the environment or `.env`, all integration tests will be automatically skipped.
+
+## API Load Controls
+
+By default, unique live requests are spaced by 100ms and repeated identical
+requests are served from an in-memory session cache.
+
+You can tune the pacing if needed:
+
+```bash
+CDG_INTEG_MIN_DELAY_MS=250 pytest test_integ/ -v
+```
+
+Set `CDG_INTEG_MIN_DELAY_MS=0` to disable the delay while keeping request
+caching.

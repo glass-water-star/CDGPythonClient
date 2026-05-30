@@ -2,11 +2,13 @@
 
 import pytest
 
+from cdg_python_client import CDGPythonClient
+
 
 class TestAmendmentsList:
     """Test amendment listing endpoints."""
     
-    def test_list_amendments(self, client):
+    def test_list_amendments(self, client: CDGPythonClient):
         """Test listing amendments returns valid data."""
         amendments = client.list_amendments(limit=5)
         
@@ -30,7 +32,7 @@ class TestAmendmentsList:
         if amendment.amendment_type is not None:
             assert isinstance(amendment.amendment_type, str)
     
-    def test_list_amendments_by_congress(self, client):
+    def test_list_amendments_by_congress(self, client: CDGPythonClient):
         """Test listing amendments by congress number."""
         amendments = client.list_amendments_by_congress(congress=118, limit=3)
         
@@ -42,7 +44,7 @@ class TestAmendmentsList:
             if amendment.congress is not None:
                 assert amendment.congress == 118
     
-    def test_amendment_has_latest_action(self, client):
+    def test_amendment_has_latest_action(self, client: CDGPythonClient):
         """Test that amendments have latest action information."""
         amendments = client.list_amendments(limit=1)
         

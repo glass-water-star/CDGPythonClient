@@ -1,17 +1,61 @@
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
+fn string_or_int<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+    use serde_json::Value;
+
+    match Value::deserialize(deserializer)? {
+        Value::Null => Ok(None),
+        Value::String(value) => Ok(Some(value)),
+        Value::Number(value) => Ok(Some(value.to_string())),
+        other => Err(Error::custom(format!(
+            "expected string or number, got {:?}",
+            other
+        ))),
+    }
+}
+
+fn deserialize_committee_print_detail<'de, D>(
+    deserializer: D,
+) -> Result<CommitteePrintDetail, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+    use serde_json::Value;
+
+    match Value::deserialize(deserializer)? {
+        Value::Object(value) => serde_json::from_value(Value::Object(value))
+            .map_err(|error| Error::custom(error.to_string())),
+        Value::Array(values) => {
+            let value = values
+                .into_iter()
+                .next()
+                .ok_or_else(|| Error::custom("expected committeePrint object or non-empty array"))?;
+            serde_json::from_value(value).map_err(|error| Error::custom(error.to_string()))
+        }
+        other => Err(Error::custom(format!(
+            "expected committeePrint object or array, got {:?}",
+            other
+        ))),
+    }
+}
+
 /// Represents a subcommittee
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct Subcommittee {
     #[pyo3(get)]
     pub name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "systemCode")]
     pub system_code: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -19,7 +63,10 @@ pub struct Subcommittee {
 #[pymethods]
 impl Subcommittee {
     fn __repr__(&self) -> String {
-        format!("Subcommittee(name={:?}, code={:?})", self.name, self.system_code)
+        format!(
+            "Subcommittee(name={:?}, code={:?})",
+            self.name, self.system_code
+        )
     }
 }
 
@@ -29,11 +76,11 @@ impl Subcommittee {
 pub struct ParentCommittee {
     #[pyo3(get)]
     pub name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "systemCode")]
     pub system_code: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -41,7 +88,10 @@ pub struct ParentCommittee {
 #[pymethods]
 impl ParentCommittee {
     fn __repr__(&self) -> String {
-        format!("ParentCommittee(name={:?}, code={:?})", self.name, self.system_code)
+        format!(
+            "ParentCommittee(name={:?}, code={:?})",
+            self.name, self.system_code
+        )
     }
 }
 
@@ -51,28 +101,28 @@ impl ParentCommittee {
 pub struct CommitteeItem {
     #[pyo3(get)]
     pub chamber: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "committeeTypeCode")]
     pub committee_type_code: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub name: Option<String>,
-    
+
     #[pyo3(get)]
     pub parent: Option<ParentCommittee>,
-    
+
     #[pyo3(get)]
     pub subcommittees: Option<Vec<Subcommittee>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "systemCode")]
     pub system_code: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -94,19 +144,19 @@ pub struct CommitteeHistory {
     #[pyo3(get)]
     #[serde(rename = "libraryOfCongressName")]
     pub library_of_congress_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "officialName")]
     pub official_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "startDate")]
     pub start_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "endDate")]
     pub end_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
@@ -128,7 +178,7 @@ impl CommitteeHistory {
 pub struct ResourceCount {
     #[pyo3(get)]
     pub count: Option<i32>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -146,34 +196,50 @@ impl ResourceCount {
 pub struct CommitteeDetailInfo {
     #[pyo3(get)]
     pub bills: Option<ResourceCount>,
-    
+
+    #[pyo3(get)]
+    pub chamber: Option<String>,
+
+    #[pyo3(get)]
+    #[serde(rename = "committeeWebsiteUrl")]
+    pub committee_website_url: Option<String>,
+
     #[pyo3(get)]
     pub communications: Option<ResourceCount>,
-    
+
     #[pyo3(get)]
     pub history: Option<Vec<CommitteeHistory>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "isCurrent")]
     pub is_current: Option<bool>,
-    
+
     #[pyo3(get)]
     pub reports: Option<ResourceCount>,
-    
+
+    #[pyo3(get)]
+    pub nominations: Option<ResourceCount>,
+
     #[pyo3(get)]
     pub subcommittees: Option<Vec<Subcommittee>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "systemCode")]
     pub system_code: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub committee_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
+
+    #[pyo3(get)]
+    pub name: Option<String>,
+
+    #[pyo3(get)]
+    pub parent: Option<ParentCommittee>,
 }
 
 #[pymethods]
@@ -193,25 +259,25 @@ pub struct CommitteeBill {
     #[pyo3(get)]
     #[serde(rename = "actionDate")]
     pub action_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "relationshipType")]
     pub relationship_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub bill_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -232,24 +298,24 @@ impl CommitteeBill {
 pub struct CommitteeReportItem {
     #[pyo3(get)]
     pub citation: Option<String>,
-    
+
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     pub part: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub report_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -270,30 +336,32 @@ impl CommitteeReportItem {
 pub struct CommitteeReportDetail {
     #[pyo3(get)]
     pub citation: Option<String>,
-    
+
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "isConferenceReport")]
     pub is_conference_report: Option<bool>,
-    
+
     #[pyo3(get)]
+    #[serde(default)]
+    #[serde(deserialize_with = "string_or_int")]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     pub part: Option<i32>,
-    
+
     #[pyo3(get)]
     pub text: Option<ResourceCount>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub report_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
@@ -316,7 +384,7 @@ pub struct CommitteeReportText {
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub text_type: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -334,23 +402,25 @@ impl CommitteeReportText {
 pub struct CommitteePrintItem {
     #[pyo3(get)]
     pub chamber: Option<String>,
-    
+
     #[pyo3(get)]
     pub citation: Option<String>,
-    
+
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "jacketNumber")]
     pub jacket_number: Option<i32>,
-    
+
     #[pyo3(get)]
+    #[serde(default)]
+    #[serde(deserialize_with = "string_or_int")]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
@@ -372,26 +442,28 @@ impl CommitteePrintItem {
 pub struct CommitteePrintDetail {
     #[pyo3(get)]
     pub chamber: Option<String>,
-    
+
     #[pyo3(get)]
     pub citation: Option<String>,
-    
+
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "jacketNumber")]
     pub jacket_number: Option<i32>,
-    
+
     #[pyo3(get)]
+    #[serde(default)]
+    #[serde(deserialize_with = "string_or_int")]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     pub text: Option<ResourceCount>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
@@ -414,7 +486,7 @@ pub struct CommitteePrintText {
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub text_type: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -467,6 +539,7 @@ pub struct CommitteePrintsResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommitteePrintDetailResponse {
     #[serde(rename = "committeePrint")]
+    #[serde(deserialize_with = "deserialize_committee_print_detail")]
     pub committee_print: CommitteePrintDetail,
 }
 

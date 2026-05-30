@@ -1,0 +1,75 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+categories:
+  - title: "API coverage"
+    labels:
+      - api
+      - coverage
+  - title: "Packaging and releases"
+    labels:
+      - packaging
+      - release
+      - pypi
+  - title: "Testing and reliability"
+    labels:
+      - testing
+      - reliability
+      - ci
+  - title: "Documentation"
+    labels:
+      - docs
+  - title: "Performance"
+    labels:
+      - performance
+  - title: "Other changes"
+    labels:
+      - "*"
+
+version-resolver:
+  major:
+    labels:
+      - breaking-change
+  minor:
+    labels:
+      - enhancement
+      - feature
+  patch:
+    labels:
+      - bug
+      - fix
+      - chore
+      - testing
+      - docs
+      - performance
+      - packaging
+  default: patch
+
+autolabeler:
+  - label: "docs"
+    files:
+      - "*.md"
+      - "docs/**"
+  - label: "testing"
+    files:
+      - "tests/**"
+      - "test_integ/**"
+  - label: "ci"
+    files:
+      - ".github/workflows/**"
+  - label: "packaging"
+    files:
+      - "pyproject.toml"
+      - "Cargo.toml"
+  - label: "api"
+    files:
+      - "src/**"

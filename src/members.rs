@@ -10,25 +10,25 @@ pub struct Sponsor {
     #[pyo3(get)]
     #[serde(rename = "bioguideId")]
     pub bioguide_id: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "firstName")]
     pub first_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "lastName")]
     pub last_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "fullName")]
     pub full_name: Option<String>,
-    
+
     #[pyo3(get)]
     pub state: Option<String>,
-    
+
     #[pyo3(get)]
     pub party: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }

@@ -12,13 +12,9 @@ from cdg_python_client import CDGPythonClient
 class TestHouseVotesList:
     """Tests for list_house_votes endpoint."""
     
-    def test_list_house_votes_basic(self):
+    def test_list_house_votes_basic(self, client: CDGPythonClient):
         """Test getting a basic list of house votes."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
+
         votes = client.list_house_votes(limit=5)
         
         assert votes is not None
@@ -32,25 +28,15 @@ class TestHouseVotesList:
             assert hasattr(vote, 'session_number')
             print(f"Sample vote: {vote}")
     
-    def test_list_house_votes_with_pagination(self):
+    def test_list_house_votes_with_pagination(self, client: CDGPythonClient):
         """Test list with pagination parameters."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
         votes = client.list_house_votes(offset=10, limit=5)
         
         assert votes is not None
         assert isinstance(votes, list)
     
-    def test_list_house_votes_with_date_filter(self):
+    def test_list_house_votes_with_date_filter(self, client: CDGPythonClient):
         """Test list with date filtering."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
         votes = client.list_house_votes(
             from_date="2024-01-01T00:00:00Z",
             limit=5
@@ -63,13 +49,8 @@ class TestHouseVotesList:
 class TestHouseVotesByCongress:
     """Tests for list_house_votes_by_congress endpoint."""
     
-    def test_list_votes_by_congress(self):
+    def test_list_votes_by_congress(self, client: CDGPythonClient):
         """Test getting votes for a specific congress."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
         votes = client.list_house_votes_by_congress(118, limit=5)
         
         assert votes is not None
@@ -84,13 +65,8 @@ class TestHouseVotesByCongress:
 class TestHouseVotesBySession:
     """Tests for list_house_votes_by_session endpoint."""
     
-    def test_list_votes_by_session(self):
+    def test_list_votes_by_session(self, client: CDGPythonClient):
         """Test getting votes for a specific congress and session."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
         votes = client.list_house_votes_by_session(118, 2, limit=5)
         
         assert votes is not None
@@ -106,13 +82,8 @@ class TestHouseVotesBySession:
 class TestHouseVoteDetail:
     """Tests for get_house_vote endpoint."""
     
-    def test_get_house_vote(self):
+    def test_get_house_vote(self, client: CDGPythonClient):
         """Test getting detailed information about a specific vote."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
         
         # Get a vote from the list first
         votes = client.list_house_votes_by_session(118, 2, limit=1)
@@ -121,17 +92,17 @@ class TestHouseVoteDetail:
             pytest.skip("No votes available for testing")
         
         vote_basic = votes[0]
-        congress = vote_basic.congress
-        session = vote_basic.session_number
-        roll_call = vote_basic.roll_call_number
         
+        assert vote_basic.congress is not None
+        assert vote_basic.session_number is not None
+        assert vote_basic.roll_call_number is not None
         # Get detailed vote information
-        vote_detail = client.get_house_vote(congress, session, roll_call)
+        vote_detail = client.get_house_vote(vote_basic.congress, vote_basic.session_number, vote_basic.roll_call_number)
         
         assert vote_detail is not None
-        assert vote_detail.congress == congress
-        assert vote_detail.session_number == session
-        assert vote_detail.roll_call_number == roll_call
+        assert vote_detail.congress == vote_basic.congress
+        assert vote_detail.session_number == vote_basic.session_number
+        assert vote_detail.roll_call_number == vote_basic.roll_call_number
         assert hasattr(vote_detail, 'vote_party_total')
         assert hasattr(vote_detail, 'vote_question')
         
@@ -144,14 +115,8 @@ class TestHouseVoteDetail:
 class TestHouseVoteMembers:
     """Tests for get_house_vote_members endpoint."""
     
-    def test_get_vote_members(self):
+    def test_get_vote_members(self, client: CDGPythonClient):
         """Test getting member voting information for a specific vote."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
-        
         # Get a vote from the list first
         votes = client.list_house_votes_by_session(118, 2, limit=1)
         
@@ -159,17 +124,17 @@ class TestHouseVoteMembers:
             pytest.skip("No votes available for testing")
         
         vote_basic = votes[0]
-        congress = vote_basic.congress
-        session = vote_basic.session_number
-        roll_call = vote_basic.roll_call_number
+        assert vote_basic.congress is not None
+        assert vote_basic.session_number is not None
+        assert vote_basic.roll_call_number is not None
         
         # Get member voting information
-        vote_members = client.get_house_vote_members(congress, session, roll_call, limit=10)
+        vote_members = client.get_house_vote_members(vote_basic.congress, vote_basic.session_number, vote_basic.roll_call_number, limit=10)
         
         assert vote_members is not None
-        assert vote_members.congress == congress
-        assert vote_members.session_number == session
-        assert vote_members.roll_call_number == roll_call
+        assert vote_members.congress == vote_basic.congress
+        assert vote_members.session_number == vote_basic.session_number
+        assert vote_members.roll_call_number == vote_basic.roll_call_number
         assert hasattr(vote_members, 'results')
         
         print(f"Vote members info: {vote_members}")
@@ -186,14 +151,9 @@ class TestHouseVoteMembers:
 class TestHouseVoteWorkflow:
     """Integration test showing a complete house vote workflow."""
     
-    def test_complete_workflow(self):
+    def test_complete_workflow(self, client: CDGPythonClient):
         """Test a complete workflow: list -> detail -> members."""
-        api_key = os.getenv("CONGRESS_API_KEY")
-        if not api_key:
-            pytest.skip("CONGRESS_API_KEY not set")
-        
-        client = CDGPythonClient(api_key)
-        
+
         # Step 1: Get recent votes for Congress 118, Session 2
         print("\n1. Getting recent votes...")
         votes = client.list_house_votes_by_session(118, 2, limit=3)
@@ -202,7 +162,10 @@ class TestHouseVoteWorkflow:
         
         # Step 2: Get detailed info for the first vote
         vote = votes[0]
-        print(f"\n2. Getting details for vote {vote.roll_call_number}...")
+        assert vote.congress is not None
+        assert vote.session_number is not None
+        assert vote.roll_call_number is not None
+
         vote_detail = client.get_house_vote(
             vote.congress, 
             vote.session_number, 

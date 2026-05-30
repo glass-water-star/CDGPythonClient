@@ -23,38 +23,67 @@ This library provides comprehensive access to the U.S. Congress.gov API, allowin
 - **Committees** - Committee information and bills
 - **Committee Reports** - Official committee reports
 - **Committee Prints** - Committee publications
+- **Committee Meetings** - Scheduled and historical committee meetings
 - **Hearings** - Congressional hearings
 - **House Votes** - House roll call votes (BETA)
+- **House Communications** - Executive and other House communications
+- **Senate Communications** - Executive and other Senate communications
+- **House Requirements** - House reporting requirements and matching communications
 - **Nominations** - Presidential nominations
 - **Treaties** - Treaty information
+- **Daily Congressional Record** - Daily issue listings, issue detail, and articles
+- **Bound Congressional Record** - Bound record listings and day detail
 - **Congressional Record** - Daily Congressional Record
 - **Summaries** - Bill summaries
 - **CRS Reports** - Congressional Research Service reports
 
 ## Installation
 
-### Prerequisites
+### From PyPI
 
-- Python 3.8 or higher
-- Rust toolchain (for building from source)
-- A Congress.gov API key ([get one here](https://api.data.gov/signup/))
-
-### From Source
+Published releases are intended to include prebuilt wheels for supported platforms, so most users should only need:
 
 ```bash
-# Install maturin if not already installed
-pip install maturin
+python -m pip install cdg_python_client
+```
 
+### Build from source
+
+You only need Rust when installing from a checkout or when a wheel is not available for your platform.
+
+- Python 3.8 or higher
+- Rust toolchain
+- A Congress.gov API key ([get one here](https://api.data.gov/signup/))
+
+```bash
 # Clone the repository
 git clone https://github.com/glass-water-star/CDGPythonClient.git
 cd CDGPythonClient
 
-# Build and install in development mode
-maturin develop --release
-
-# Or build a wheel for distribution
-maturin build --release
+# Build and install with pip
+python -m pip install .
 ```
+
+### Development install
+
+```bash
+python -m pip install -e ".[dev]"
+maturin develop --release
+```
+
+### PyPy
+
+PyO3 0.23 supports PyPy builds, and this package does not use any CPython-only FFI APIs. PyPy builds are interpreter-specific, so build against a PyPy interpreter directly:
+
+```bash
+# Source install with PyPy
+PYO3_PYTHON=pypy3 pip install .
+
+# Or build a PyPy wheel explicitly
+maturin build --release -i pypy3
+```
+
+For Linux wheel publishing, build inside a manylinux environment (or use `maturin --zig`) so the resulting wheel is broadly portable.
 
 ## Quick Start
 
@@ -69,10 +98,32 @@ bills = client.list_bills(limit=10)
 for bill in bills:
     print(f"{bill.bill_type} {bill.number}: {bill.title}")
 
-# Get details for a specific bill
-bill = client.get_bill(congress=118, bill_type="hr", bill_number=1)
+# Get details for a specific bill (bill_number accepts either 1 or "1")
+bill = client.get_bill(congress=118, bill_type="hr", bill_number="1")
 print(f"Title: {bill.title}")
 print(f"Sponsor: {bill.sponsors[0].full_name if bill.sponsors else 'N/A'}")
+```
+
+### Async Quick Start
+
+```python
+import asyncio
+
+from cdg_python_client import AsyncCDGPythonClient
+
+
+async def main():
+    client = AsyncCDGPythonClient(api_key="your_api_key_here")
+
+    bills = await client.list_bills(limit=10)
+    for bill in bills:
+        print(f"{bill.bill_type} {bill.number}: {bill.title}")
+
+    bill = await client.get_bill(congress=118, bill_type="hr", bill_number="1")
+    print(f"Title: {bill.title}")
+
+
+asyncio.run(main())
 ```
 
 ## Usage Examples
@@ -94,14 +145,14 @@ senate_bills = client.list_bills_by_type(
 actions = client.get_bill_actions(
     congress=118,
     bill_type="hr",
-    bill_number=1
+    bill_number="1"
 )
 
 # Get bill cosponsors
 cosponsors = client.get_bill_cosponsors(
     congress=118,
     bill_type="hr",
-    bill_number=1
+    bill_number="1"
 )
 ```
 
@@ -249,6 +300,133 @@ The main client class providing access to all Congress.gov API endpoints.
 ```python
 client = CDGPythonClient(api_key="your_api_key")
 ```
+
+Retry behavior:
+
+- Retryable transport send failures are retried automatically.
+- HTTP `429 Too Many Requests` and transient `5xx` responses (`500`, `502`, `503`, `504`) are retried.
+- By default, the client makes up to 3 total attempts.
+- The delay uses exponential backoff with jitter starting from `retry_base_delay_ms`; when the
+  API returns a numeric `Retry-After` header, that delay is honored instead.
+- Non-retryable HTTP errors and deserialization errors are returned immediately.
+
+The client raises package-specific exceptions instead of generic runtime errors. The most useful
+ones to catch are `CDGRequestError`, `CDGHttpError`, `CDGAuthError`, `CDGNotFoundError`,
+`CDGRateLimitError`, `CDGServerError`, `CDGDeserializationError`, and `CDGInvalidUrlError`.
+
+You can also configure per-client HTTP behavior with optional constructor arguments or instance
+methods:
+
+```python
+from cdg_python_client import CDGPythonClient
+
+client = CDGPythonClient(
+    api_key="your_api_key",
+    timeout_seconds=10.0,
+    user_agent="my-app/1.0",
+)
+
+client.configure_timeout(5.0)
+client.configure_user_agent("my-app/1.1")
+```
+
+You can customize the retry settings after constructing the client:
+
+```python
+from cdg_python_client import CDGPythonClient, configure_client_retries
+
+client = CDGPythonClient(api_key="your_api_key")
+configure_client_retries(client, 5, 500)
+```
+
+#### Optional request logging
+
+Logging is **disabled by default** and is configured per client instance. You can provide either:
+
+- a callback that accepts one event dictionary, or
+- a standard-library logger-like object with a `.log(...)` method.
+
+```python
+import logging
+
+from cdg_python_client import CDGPythonClient
+
+client = CDGPythonClient(api_key="your_api_key")
+
+# Callback target
+client.configure_logging(lambda event: print(event["event"], event["url"]))
+
+# Or a stdlib logger target
+logger = logging.getLogger("cdg")
+client.configure_logging(logger, level="INFO")
+```
+
+Each event contains structured fields including:
+
+- `event` (`request_start`, `request_retry`, `request_success`, `request_http_error`, `request_decode_error`, `request_transport_error`)
+- `method`
+- redacted `url`
+- `path`
+- `attempt`
+- optional `status_code`, `elapsed_ms`, `error`, `offset`, and `limit`
+
+The client never logs the API key; logged URLs are redacted before the event is emitted.
+
+`AsyncCDGPythonClient` exposes the same `configure_logging(...)`, `disable_logging()`, and
+`is_logging_enabled()` methods and uses the same event payload shape.
+
+#### Pagination and follow-up fetch helpers
+
+Both `CDGPythonClient` and `AsyncCDGPythonClient` expose the same pagination story. The sync
+client returns pages directly, while the async client exposes awaitable `fetch_page(...)`,
+async-iterable `fetch_pages(...)`, and awaitable `follow_link(...)`.
+
+```python
+from cdg_python_client import CDGPythonClient
+
+client = CDGPythonClient(api_key="your_api_key")
+
+# Fetch a page from a relative API path
+page = client.fetch_page("/bill", limit=5)
+print(page.item_key)   # "bills"
+print(page.count)      # total result count when provided by the API
+print(page.next_url)   # next page URL when available
+print(page.items[0]["url"])  # raw JSON-like page items, not typed Bill objects
+
+if page.has_next():
+    next_page = client.fetch_page(page.next_url)
+
+# Iterate items directly across pages
+for bill in client.iter_items("/bill", limit=5, max_items=10):
+    print(bill)
+
+# Iterate pages from a single client entry point
+for page in client.fetch_pages("/bill", limit=250, max_pages=2):
+    for bill in page.items:
+        ...
+
+# Follow a resource link as a raw page
+page = client.follow_link("https://api.congress.gov/v3/bill?limit=5")
+print(page.items[0]["url"])
+
+# Follow known linked resources and keep typed models
+amendment = client.get_amendment(118, "hamdt", "1")
+actions = client.get_amendment_actions_by_link(amendment.actions, limit=5)
+text_versions = client.get_amendment_text_by_link(amendment.text_versions, limit=5)
+```
+
+```python
+from cdg_python_client import AsyncCDGPythonClient
+
+client = AsyncCDGPythonClient(api_key="your_api_key")
+page = await client.fetch_page("/bill", limit=5)
+amendment = await client.get_amendment(118, "hamdt", "1")
+actions = await client.get_amendment_actions_by_link(amendment.actions, limit=5)
+```
+
+Typed `*_by_link(...)` helpers are available for the linked resources already exposed by the API
+models, including amendment actions/text, committee bills/reports/nominations, committee
+report/print text links, daily congressional record articles, and treaty actions/committees/parts.
 
 #### Bill Operations
 
@@ -409,18 +587,35 @@ maturin build --release
 ### Testing
 
 ```bash
-# Set your API key
+# Build the extension into the active environment first
+maturin develop --release
+
+# Run local/unit tests
+pytest tests -v
+
+# Build a wheel, install it into an isolated virtualenv, and run the package smoke test
+python tests/wheel_smoke.py
+
+# Set your API key in .env or the shell
+echo 'CONGRESS_API_KEY="your_api_key"' > .env
+
+# Or export it for the current shell
 export CONGRESS_API_KEY="your_api_key"
 
 # Run integration tests
 pytest test_integ/ -v
 
+# Run the default configured pytest selection
+pytest -v
+
 # Run specific test file
 pytest test_integ/test_bills.py -v
 
+# Run a single integration test
+pytest test_integ/test_bills.py::TestBillsList::test_list_bills -v
+
 # Run examples
 python examples/test_bills.py
-python examples/example_laws.py
 ```
 
 ### Project Structure
@@ -446,9 +641,23 @@ CDGPythonClient/
 │   └── __init__.pyi       # Type stubs
 ├── test_integ/            # Integration tests
 ├── examples/              # Example scripts
+├── scripts/               # One-off API/debug probes
 ├── docs/                  # Documentation
 └── pyproject.toml         # Python project config
 ```
+
+### Release automation
+
+GitHub Actions now builds CPython wheels for Linux, macOS, and Windows plus an sdist on pull requests and pushes. Tags matching `v*` can publish those artifacts to PyPI once trusted publishing is enabled for this repository in PyPI.
+
+Wheel and sdist artifacts are smoke-tested from clean temporary virtual environments outside the repository checkout so local files cannot mask packaging issues.
+The source-build test job also runs on a small CPython matrix (`3.8`, `3.12`, `3.13`), and the Linux `abi3` wheel is install-smoke-tested across multiple supported CPython versions (`3.8`, `3.10`, `3.12`, `3.13`).
+
+`pytest tests/test_api_spec_coverage.py -q` compares `src/client.rs` against `docs/swagger.json` and fails if a documented Congress.gov path is missing from the client. It also tracks the small set of intentional non-swagger paths that are kept for compatibility or live-API reasons.
+
+PyPy source builds are documented above. If you want to publish PyPy wheels as well, extend the release workflow with explicit PyPy interpreter jobs.
+
+Release notes are drafted automatically with Release Drafter based on merged pull requests and labels.
 
 ## Performance
 
@@ -458,7 +667,14 @@ Built with Rust and PyO3, this library offers:
 - **Zero-copy**: Efficient data transfer between Rust and Python
 - **Concurrent**: Safe handling of concurrent requests
 
-Benchmark comparisons show 2-5x speed improvements over pure Python implementations for typical API workflows.
+You can run the included live benchmark harness to compare the Rust/PyO3 client against a simple `requests` baseline on your own machine:
+
+```bash
+python -m pip install -e ".[dev]"
+python scripts/benchmark_live_api.py --iterations 5 --warmups 1
+```
+
+The script benchmarks a small set of representative Congress.gov calls (`fetch_page`, `list_bills`, and `get_bill`) and prints mean/median timings plus a relative speedup ratio. Because it measures real API traffic, the exact numbers depend on network conditions and the remote service; use it as a reproducible end-to-end comparison rather than a fixed universal claim.
 
 ## Contributing
 
@@ -541,9 +757,9 @@ for law in laws:
 
 ### Rate Limiting
 
-The Congress.gov API has rate limits. If you encounter 429 errors:
+The Congress.gov API has rate limits. The client already retries transient `429` and server-side
+responses with backoff, but if you continue to encounter rate limits:
 - Reduce request frequency
-- Implement exponential backoff
 - Contact api.data.gov for higher limits if needed
 
 ## Support
@@ -561,4 +777,3 @@ For issues, questions, or contributions:
 ---
 
 **Note**: This library is not officially affiliated with Congress.gov or the Library of Congress. It is an independent client implementation of their public API.
-

@@ -8,11 +8,9 @@ from cdg_python_client import CDGPythonClient
 class TestMembersByState:
     """Test member listing by state."""
     
-    def test_list_members_by_state(self, client, api_key):
+    def test_list_members_by_state(self, client: CDGPythonClient):
         """Test getting members by state code."""
-        if not api_key:
-            pytest.skip("API key not provided")
-        
+
         # Test with California
         members = client.list_members_by_state("CA", limit=5)
         
@@ -43,11 +41,8 @@ class TestMembersByState:
 class TestMembersByStateDistrict:
     """Test member listing by state and district."""
     
-    def test_list_members_by_state_district(self, client, api_key):
+    def test_list_members_by_state_district(self, client: CDGPythonClient):
         """Test getting members by state and district."""
-        if not api_key:
-            pytest.skip("API key not provided")
-        
         # Test with California, District 1
         members = client.list_members_by_state_district("CA", 1)
         
@@ -56,10 +51,8 @@ class TestMembersByStateDistrict:
         for member in members:
             assert hasattr(member, 'bioguide_id')
     
-    def test_list_members_by_state_district_current(self, client, api_key):
+    def test_list_members_by_state_district_current(self, client: CDGPythonClient):
         """Test getting current members by state and district."""
-        if not api_key:
-            pytest.skip("API key not provided")
         
         members = client.list_members_by_state_district("TX", 10, current_member=True)
         
@@ -69,10 +62,8 @@ class TestMembersByStateDistrict:
 class TestAllMemberEndpoints:
     """Test all member endpoints together to ensure they work."""
     
-    def test_member_workflow(self, client, api_key):
+    def test_member_workflow(self, client: CDGPythonClient):
         """Test a complete member workflow."""
-        if not api_key:
-            pytest.skip("API key not provided")
         
         # 1. Get members from a state
         members = client.list_members_by_state("VT", limit=5)

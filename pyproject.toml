@@ -1,27 +1,57 @@
 [build-system]
-requires = ["maturin>=1.8,<2.0"]
+requires = ["maturin>=1.9.4,<2.0"]
 build-backend = "maturin"
 
 [project]
 name = "cdg_python_client"
+description = "High-performance Python bindings for the Congress.gov API v3 powered by Rust and PyO3."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Mason Stoecker" },
+]
 requires-python = ">=3.8"
+keywords = ["congress", "congress.gov", "api-client", "pyo3", "rust"]
 classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dynamic = ["version"]
-dependencies = [
+
+[project.urls]
+Homepage = "https://github.com/glass-water-star/CDGPythonClient"
+Repository = "https://github.com/glass-water-star/CDGPythonClient"
+Issues = "https://github.com/glass-water-star/CDGPythonClient/issues"
+Changelog = "https://github.com/glass-water-star/CDGPythonClient/releases"
+
+[project.optional-dependencies]
+dev = [
+    "maturin>=1.9.4,<2.0",
+    "pytest>=7.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.0",
     "requests>=2.32.4",
     "tenacity>=9.0.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "tenacity>=8.0",
-]
-
 [tool.maturin]
-features = ["pyo3/extension-module"]
+bindings = "pyo3"
+module-name = "cdg_python_client.cdg_python_client"
+python-source = "."
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "test_integ"]
+asyncio_mode = "auto"

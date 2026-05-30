@@ -1,5 +1,26 @@
 use pyo3::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_json;
+
+/// Helper function to deserialize a value that could be either a string or integer into a string
+fn string_or_int<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+    use serde_json::Value;
+
+    let value = Value::deserialize(deserializer)?;
+    match value {
+        Value::Null => Ok(None),
+        Value::String(s) => Ok(Some(s)),
+        Value::Number(n) => Ok(Some(n.to_string())),
+        _ => Err(Error::custom(format!(
+            "expected string or number, got {:?}",
+            value
+        ))),
+    }
+}
 
 /// Represents a CRS report format
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -7,7 +28,7 @@ use serde::{Deserialize, Serialize};
 pub struct CrsReportFormat {
     #[pyo3(get)]
     pub format: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -56,16 +77,17 @@ pub struct CrsReportRelatedMaterial {
     #[pyo3(get)]
     #[serde(rename = "URL")]
     pub url: Option<String>,
-    
+
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
+    #[serde(deserialize_with = "string_or_int")]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub material_type: Option<String>,
@@ -87,30 +109,30 @@ impl CrsReportRelatedMaterial {
 pub struct CrsReport {
     #[pyo3(get)]
     #[serde(rename = "contentType")]
-    pub content_type: Option<String>,
-    
+    pub content_type: String,
+
     #[pyo3(get)]
-    pub id: Option<String>,
-    
+    pub id: String,
+
     #[pyo3(get)]
     #[serde(rename = "publishDate")]
-    pub publish_date: Option<String>,
-    
+    pub publish_date: String,
+
     #[pyo3(get)]
-    pub status: Option<String>,
-    
+    pub status: String,
+
     #[pyo3(get)]
-    pub title: Option<String>,
-    
+    pub title: String,
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
-    pub update_date: Option<String>,
-    
+    pub update_date: String,
+
     #[pyo3(get)]
-    pub url: Option<String>,
-    
+    pub url: String,
+
     #[pyo3(get)]
-    pub version: Option<i32>,
+    pub version: i32,
 }
 
 #[pymethods]
@@ -129,44 +151,44 @@ impl CrsReport {
 pub struct CrsReportDetail {
     #[pyo3(get)]
     pub authors: Option<Vec<CrsReportAuthor>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "contentType")]
     pub content_type: Option<String>,
-    
+
     #[pyo3(get)]
     pub formats: Option<Vec<CrsReportFormat>>,
-    
+
     #[pyo3(get)]
     pub id: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "publishDate")]
     pub publish_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "relatedMaterials")]
     pub related_materials: Option<Vec<CrsReportRelatedMaterial>>,
-    
+
     #[pyo3(get)]
     pub status: Option<String>,
-    
+
     #[pyo3(get)]
     pub summary: Option<String>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     pub topics: Option<Vec<CrsReportTopic>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
-    
+
     #[pyo3(get)]
     pub version: Option<i32>,
 }

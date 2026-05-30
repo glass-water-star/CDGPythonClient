@@ -2,11 +2,13 @@
 
 import pytest
 
+from cdg_python_client import CDGPythonClient
+
 
 class TestHearingsList:
     """Test hearing listing endpoints."""
     
-    def test_list_hearings(self, client):
+    def test_list_hearings(self, client: CDGPythonClient):
         """Test listing hearings returns valid data."""
         hearings = client.list_hearings(limit=5)
         
@@ -57,7 +59,7 @@ class TestHearingsList:
 class TestHearingsByCongress:
     """Test hearing listing by congress."""
     
-    def test_list_hearings_by_congress(self, client):
+    def test_list_hearings_by_congress(self, client: CDGPythonClient):
         """Test listing hearings for a specific congress."""
         congress = 118
         hearings = client.list_hearings_by_congress(congress=congress, limit=5)
@@ -71,7 +73,7 @@ class TestHearingsByCongress:
             if hearing.congress is not None:
                 assert hearing.congress == congress
     
-    def test_list_hearings_by_congress_117(self, client):
+    def test_list_hearings_by_congress_117(self, client: CDGPythonClient):
         """Test listing hearings for congress 117."""
         hearings = client.list_hearings_by_congress(congress=117, limit=3)
         
@@ -86,7 +88,7 @@ class TestHearingsByCongress:
 class TestHearingsByChamber:
     """Test hearing listing by congress and chamber."""
     
-    def test_list_hearings_by_chamber_house(self, client):
+    def test_list_hearings_by_chamber_house(self, client: CDGPythonClient):
         """Test listing House hearings for a specific congress."""
         hearings = client.list_hearings_by_chamber(
             congress=118,
@@ -105,7 +107,7 @@ class TestHearingsByChamber:
             if hearing.chamber is not None:
                 assert hearing.chamber.lower() == "house"
     
-    def test_list_hearings_by_chamber_senate(self, client):
+    def test_list_hearings_by_chamber_senate(self, client: CDGPythonClient):
         """Test listing Senate hearings for a specific congress."""
         hearings = client.list_hearings_by_chamber(
             congress=118,
@@ -126,13 +128,14 @@ class TestHearingsByChamber:
 class TestHearingDetail:
     """Test hearing detail endpoint."""
     
-    def test_get_hearing(self, client):
+    def test_get_hearing(self, client: CDGPythonClient):
         """Test getting detailed hearing information."""
         # First, get a list of hearings to find a valid one
         hearings = client.list_hearings_by_chamber(
             congress=117,
             chamber="house",
-            limit=1
+            limit=1,
+            format="json"
         )
         
         if len(hearings) == 0:
@@ -197,7 +200,7 @@ class TestHearingDetail:
                         assert hasattr(committee, "url")
                 break
     
-    def test_hearing_detail_has_formats(self, client):
+    def test_hearing_detail_has_formats(self, client: CDGPythonClient):
         """Test that hearing details include format information."""
         hearings = client.list_hearings_by_chamber(
             congress=117,
@@ -235,10 +238,11 @@ class TestHearingDetail:
 class TestHearingWorkflow:
     """Test a complete workflow using hearing endpoints."""
     
-    def test_complete_workflow(self, client):
+    def test_complete_workflow(self, client: CDGPythonClient):
         """Test a complete workflow: list -> filter by congress/chamber -> detail."""
         print("\n1. Getting recent hearings...")
-        all_hearings = client.list_hearings(limit=10)
+        all_hearings = client.list_hearings(limit=10, format="json")
+        print(all_hearings)
         assert len(all_hearings) > 0
         print(f"   Found {len(all_hearings)} hearings")
         
@@ -255,7 +259,8 @@ class TestHearingWorkflow:
         print(f"\n2. Getting hearings for Congress {recent_congress}...")
         congress_hearings = client.list_hearings_by_congress(
             congress=recent_congress,
-            limit=5
+            limit=5,
+            format="json"
         )
         assert len(congress_hearings) > 0
         print(f"   Found {len(congress_hearings)} hearings for Congress {recent_congress}")
@@ -273,6 +278,10 @@ class TestHearingWorkflow:
             pytest.skip("No suitable hearing found for detail test")
         
         print(f"\n3. Getting hearings for {test_hearing.chamber} chamber...")
+        assert test_hearing.chamber is not None
+        assert test_hearing.congress is not None
+        assert test_hearing.jacket_number is not None
+        
         chamber_hearings = client.list_hearings_by_chamber(
             congress=test_hearing.congress,
             chamber=test_hearing.chamber,

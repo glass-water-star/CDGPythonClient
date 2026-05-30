@@ -2,11 +2,13 @@
 
 import pytest
 
+from cdg_python_client import CDGPythonClient
+
 
 class TestMembersList:
     """Test member listing endpoints."""
     
-    def test_list_members(self, client):
+    def test_list_members(self, client: CDGPythonClient):
         """Test listing members returns valid data."""
         members = client.list_members(limit=5, current_member=True)
         
@@ -30,7 +32,7 @@ class TestMembersList:
         if member.state is not None:
             assert isinstance(member.state, str)
     
-    def test_list_members_by_congress(self, client):
+    def test_list_members_by_congress(self, client: CDGPythonClient):
         """Test listing members by congress number."""
         members = client.list_members_by_congress(
             congress=118,
@@ -41,7 +43,7 @@ class TestMembersList:
         assert isinstance(members, list)
         assert len(members) > 0
     
-    def test_get_member(self, client):
+    def test_get_member(self, client: CDGPythonClient):
         """Test getting detailed member information."""
         # First, get a member to retrieve their bioguide_id
         members = client.list_members(limit=1, current_member=True)
@@ -62,7 +64,7 @@ class TestMembersList:
 class TestMemberLegislation:
     """Test member legislation endpoints."""
     
-    def test_get_member_sponsored_legislation(self, client):
+    def test_get_member_sponsored_legislation(self, client: CDGPythonClient):
         """Test getting legislation sponsored by a member."""
         # Get a member first
         members = client.list_members(limit=1, current_member=True)
@@ -85,7 +87,7 @@ class TestMemberLegislation:
             assert hasattr(bill, "number")
             assert hasattr(bill, "title")
     
-    def test_get_member_cosponsored_legislation(self, client):
+    def test_get_member_cosponsored_legislation(self, client: CDGPythonClient):
         """Test getting legislation cosponsored by a member."""
         # Get a member first
         members = client.list_members(limit=1, current_member=True)

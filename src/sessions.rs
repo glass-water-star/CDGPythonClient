@@ -7,14 +7,14 @@ use serde::{Deserialize, Serialize};
 pub struct Session {
     #[pyo3(get)]
     pub chamber: Option<String>,
-    
+
     #[pyo3(get)]
     pub number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "startDate")]
     pub start_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "endDate")]
     pub end_date: Option<String>,
@@ -37,17 +37,17 @@ pub struct Congress {
     #[pyo3(get)]
     #[serde(rename = "endYear")]
     pub end_year: Option<String>,
-    
+
     #[pyo3(get)]
     pub name: Option<String>,
-    
+
     #[pyo3(get)]
     pub sessions: Option<Vec<Session>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "startYear")]
     pub start_year: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }

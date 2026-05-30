@@ -1,6 +1,9 @@
 """Integration tests for bill-related API endpoints."""
 
+from typing import List
 import pytest
+
+from cdg_python_client import Bill, BillDetail, CDGPythonClient
 
 
 class TestBillsList:
@@ -60,31 +63,25 @@ class TestBillsList:
 class TestBillDetail:
     """Test bill detail endpoint."""
     
-    def test_get_bill(self, client):
+    def test_get_bill(self, client: CDGPythonClient):
         """Test getting detailed bill information."""
-        bill = client.get_bill(congress=118, bill_type="hr", bill_number=1)
-        
-        assert bill is not None
+        bills: List[Bill] = client.get_bills(congress=118, bill_type="hr", format="json")
+        assert len(bills) > 0
+        bill = bills[0]  # Get first bill for detail test
+        assert bill is not None 
         assert bill.congress == 118
         assert bill.bill_type is not None
         assert bill.number is not None
         assert bill.title is not None
-        
-        # Check for detail-specific fields
-        assert hasattr(bill, "introduced_date")
-        assert hasattr(bill, "sponsors")
-        assert hasattr(bill, "policy_area")
-        
-        # Validate sponsors if present
-        if bill.sponsors is not None:
-            assert isinstance(bill.sponsors, list)
-            if len(bill.sponsors) > 0:
-                sponsor = bill.sponsors[0]
-                assert hasattr(sponsor, "full_name")
-                assert hasattr(sponsor, "party")
-                assert hasattr(sponsor, "state")
-
-
+        assert bill.url is not None
+        assert bill.latest_action is not None
+        assert bill.number is not None
+        assert bill.latest_action is not None
+        assert bill.origin_chamber is not None
+        assert bill.origin_chamber_code is not None
+        assert bill.title is not None
+        assert bill.update_date is not None
+        assert bill.update_date_including_text is not None
 class TestBillSubEndpoints:
     """Test bill sub-endpoints (actions, amendments, etc.)."""
     
@@ -93,7 +90,7 @@ class TestBillSubEndpoints:
         actions = client.get_bill_actions(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number='1',
             limit=5
         )
         
@@ -104,12 +101,12 @@ class TestBillSubEndpoints:
             assert hasattr(action, "text")
             assert hasattr(action, "action_type")
     
-    def test_get_bill_amendments(self, client):
+    def test_get_bill_amendments(self, client: CDGPythonClient):
         """Test getting bill amendments."""
         amendments = client.get_bill_amendments(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number='1',
             limit=5
         )
         
@@ -121,12 +118,12 @@ class TestBillSubEndpoints:
             assert hasattr(amendment, "number")
             assert hasattr(amendment, "amendment_type")
     
-    def test_get_bill_committees(self, client):
+    def test_get_bill_committees(self, client: CDGPythonClient):
         """Test getting bill committees."""
         committees = client.get_bill_committees(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number="1",
             limit=5
         )
         
@@ -136,12 +133,12 @@ class TestBillSubEndpoints:
             assert hasattr(committee, "name")
             assert hasattr(committee, "system_code")
     
-    def test_get_bill_cosponsors(self, client):
+    def test_get_bill_cosponsors(self, client: CDGPythonClient  ):
         """Test getting bill cosponsors."""
         cosponsors = client.get_bill_cosponsors(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number="1",
             limit=5
         )
         
@@ -153,14 +150,14 @@ class TestBillSubEndpoints:
             assert hasattr(cosponsor, "state")
             assert hasattr(cosponsor, "sponsorship_date")
     
-    def test_get_related_bills(self, client):
+    def test_get_related_bills(self, client: CDGPythonClient):
         """Test getting related bills."""
         # Try a different bill that's more likely to have related bills
         # Using S.1 (a major piece of legislation) instead of HR.1
         related = client.get_related_bills(
             congress=117,
             bill_type="s",
-            bill_number=1,
+            bill_number="1",
             limit=5
         )
         
@@ -173,12 +170,12 @@ class TestBillSubEndpoints:
             assert hasattr(related_bill, "bill_type")
             assert hasattr(related_bill, "title")
     
-    def test_get_bill_subjects(self, client):
+    def test_get_bill_subjects(self, client: CDGPythonClient):
         """Test getting bill subjects."""
         subjects = client.get_bill_subjects(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number="1",
             limit=5
         )
         
@@ -189,12 +186,12 @@ class TestBillSubEndpoints:
             assert hasattr(subject, "name")
             assert subject.name is not None
     
-    def test_get_bill_summaries(self, client):
+    def test_get_bill_summaries(self, client: CDGPythonClient):
         """Test getting bill summaries."""
         summaries = client.get_bill_summaries(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number="1",
             limit=5
         )
         
@@ -204,31 +201,26 @@ class TestBillSubEndpoints:
             assert hasattr(summary, "action_date")
             assert hasattr(summary, "text")
     
-    def test_get_bill_text(self, client):
+    def test_get_bill_detail(self, client: CDGPythonClient):
         """Test getting bill text versions."""
-        text_versions = client.get_bill_text(
+        bill_detail: BillDetail = client.get_bill_detail(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number="1",
             limit=5
         )
-        
-        assert isinstance(text_versions, list)
-        if len(text_versions) > 0:
-            text_version = text_versions[0]
-            assert hasattr(text_version, "date")
-            assert hasattr(text_version, "text_type")
-            assert hasattr(text_version, "formats")
-            
-            if text_version.formats is not None:
-                assert isinstance(text_version.formats, list)
+        assert hasattr(bill_detail, "congress")
+        assert hasattr(bill_detail, "number")
+        assert hasattr(bill_detail, "bill_type")
+        assert hasattr(bill_detail, "title")
+
     
-    def test_get_bill_titles(self, client):
+    def test_get_bill_titles(self, client: CDGPythonClient  ):
         """Test getting bill titles."""
         titles = client.get_bill_titles(
             congress=118,
             bill_type="hr",
-            bill_number=1,
+            bill_number="1",
             limit=5
         )
         

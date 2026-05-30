@@ -14,3 +14,10 @@ def client(api_key):
     """Provide a CDGPythonClient instance for testing."""
     from cdg_python_client import CDGPythonClient
     return CDGPythonClient(api_key=api_key)
+
+
+@pytest.fixture
+def async_client(api_key):
+    """Provide an AsyncCDGPythonClient instance for testing."""
+    from cdg_python_client import AsyncCDGPythonClient
+    return AsyncCDGPythonClient(api_key=api_key)

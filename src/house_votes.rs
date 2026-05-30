@@ -7,48 +7,48 @@ use serde::{Deserialize, Serialize};
 pub struct HouseVote {
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     pub identifier: Option<i64>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationNumber")]
     pub legislation_number: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationType")]
     pub legislation_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationUrl")]
     pub legislation_url: Option<String>,
-    
+
     #[pyo3(get)]
     pub result: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "rollCallNumber")]
     pub roll_call_number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "sessionNumber")]
     pub session_number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "sourceDataURL")]
     pub source_data_url: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "startDate")]
     pub start_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteType")]
     pub vote_type: Option<String>,
@@ -70,7 +70,7 @@ impl HouseVote {
 pub struct Party {
     #[pyo3(get)]
     pub name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub party_type: Option<String>,
@@ -90,23 +90,23 @@ pub struct VoteParty {
     #[pyo3(get)]
     #[serde(rename = "nayTotal")]
     pub nay_total: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "notVotingTotal")]
     pub not_voting_total: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "presentTotal")]
     pub present_total: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteParty")]
     pub vote_party: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "yeaTotal")]
     pub yea_total: Option<i32>,
-    
+
     #[pyo3(get)]
     pub party: Option<Party>,
 }
@@ -127,53 +127,53 @@ impl VoteParty {
 pub struct HouseVoteDetail {
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     pub identifier: Option<i64>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationNumber")]
     pub legislation_number: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationType")]
     pub legislation_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationUrl")]
     pub legislation_url: Option<String>,
-    
+
     #[pyo3(get)]
     pub result: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "rollCallNumber")]
     pub roll_call_number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "sessionNumber")]
     pub session_number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "sourceDataURL")]
     pub source_data_url: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "startDate")]
     pub start_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteType")]
     pub vote_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "votePartyTotal")]
     pub vote_party_total: Option<Vec<VoteParty>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteQuestion")]
     pub vote_question: Option<String>,
@@ -196,23 +196,23 @@ pub struct MemberVote {
     #[pyo3(get)]
     #[serde(rename = "bioguideID")]
     pub bioguide_id: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "firstName")]
     pub first_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "lastName")]
     pub last_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteCast")]
     pub vote_cast: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteParty")]
     pub vote_party: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteState")]
     pub vote_state: Option<String>,
@@ -234,52 +234,52 @@ impl MemberVote {
 pub struct HouseVoteMembers {
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     pub identifier: Option<i64>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationNumber")]
     pub legislation_number: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationType")]
     pub legislation_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "legislationUrl")]
     pub legislation_url: Option<String>,
-    
+
     #[pyo3(get)]
     pub result: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "rollCallNumber")]
     pub roll_call_number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "sessionNumber")]
     pub session_number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "sourceDataURL")]
     pub source_data_url: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "startDate")]
     pub start_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteType")]
     pub vote_type: Option<String>,
-    
+
     #[pyo3(get)]
     pub results: Option<Vec<MemberVote>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "voteQuestion")]
     pub vote_question: Option<String>,
@@ -290,7 +290,9 @@ impl HouseVoteMembers {
     fn __repr__(&self) -> String {
         format!(
             "HouseVoteMembers(congress={:?}, session={:?}, roll_call={:?}, members={:?})",
-            self.congress, self.session_number, self.roll_call_number, 
+            self.congress,
+            self.session_number,
+            self.roll_call_number,
             self.results.as_ref().map(|r| r.len())
         )
     }

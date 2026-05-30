@@ -1,0 +1,271 @@
+name: release
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.12"
+          - "3.13"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Build extension
+        run: maturin develop --release
+
+      - name: Run cargo check
+        run: cargo check -q
+
+      - name: Run unit tests
+        run: pytest tests -q
+
+  integration:
+    needs: test
+    if: ${{ secrets.CONGRESS_API_KEY != '' }}
+    runs-on: ubuntu-latest
+    env:
+      CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Build extension
+        run: maturin develop --release
+
+      - name: Run integration tests
+        run: pytest test_integ/ -v
+
+  build-linux-wheel:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: PyO3/maturin-action@v1
+        with:
+          manylinux: "2014"
+          args: --release --out dist
+          sccache: "true"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Smoke test wheel
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import subprocess
+          import tempfile
+          import venv
+
+          artifact = next(pathlib.Path("dist").glob("*.whl"))
+          tmpdir = pathlib.Path(tempfile.mkdtemp(prefix="cdg-wheel-smoke-"))
+          venv_dir = tmpdir / "venv"
+          venv.EnvBuilder(with_pip=True).create(venv_dir)
+          python = venv_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+          subprocess.run([str(python), "-m", "pip", "install", str(artifact)], check=True)
+          subprocess.run(
+              [str(python), "-I", str(pathlib.Path("tests/package_smoke.py").resolve())],
+              cwd=tmpdir,
+              check=True,
+          )
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-ubuntu-latest
+          path: dist
+
+  build-native-wheels:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-13
+          - macos-14
+          - windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist
+          sccache: "true"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Smoke test wheel
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import subprocess
+          import tempfile
+          import venv
+
+          artifact = next(pathlib.Path("dist").glob("*.whl"))
+          tmpdir = pathlib.Path(tempfile.mkdtemp(prefix="cdg-wheel-smoke-"))
+          venv_dir = tmpdir / "venv"
+          venv.EnvBuilder(with_pip=True).create(venv_dir)
+          python = venv_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+          subprocess.run([str(python), "-m", "pip", "install", str(artifact)], check=True)
+          subprocess.run(
+              [str(python), "-I", str(pathlib.Path("tests/package_smoke.py").resolve())],
+              cwd=tmpdir,
+              check=True,
+          )
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist
+
+  validate-linux-wheel:
+    needs: build-linux-wheel
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.10"
+          - "3.12"
+          - "3.13"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels-ubuntu-latest
+          path: dist
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Smoke test Linux wheel
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import subprocess
+          import tempfile
+          import venv
+
+          artifact = next(pathlib.Path("dist").glob("*.whl"))
+          tmpdir = pathlib.Path(tempfile.mkdtemp(prefix="cdg-wheel-matrix-"))
+          venv_dir = tmpdir / "venv"
+          venv.EnvBuilder(with_pip=True).create(venv_dir)
+          python = venv_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+          subprocess.run([str(python), "-m", "pip", "install", str(artifact)], check=True)
+          subprocess.run(
+              [str(python), "-I", str(pathlib.Path("tests/package_smoke.py").resolve())],
+              cwd=tmpdir,
+              check=True,
+          )
+          PY
+
+  build-sdist:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - name: Smoke test sdist
+        shell: bash
+        run: |
+          python - <<'PY'
+          import pathlib
+          import subprocess
+          import tempfile
+          import venv
+
+          artifact = next(pathlib.Path("dist").glob("*.tar.gz"))
+          tmpdir = pathlib.Path(tempfile.mkdtemp(prefix="cdg-sdist-smoke-"))
+          venv_dir = tmpdir / "venv"
+          venv.EnvBuilder(with_pip=True).create(venv_dir)
+          python = venv_dir / "bin/python"
+
+          subprocess.run([str(python), "-m", "pip", "install", str(artifact)], check=True)
+          subprocess.run(
+              [str(python), "-I", str(pathlib.Path("tests/package_smoke.py").resolve())],
+              cwd=tmpdir,
+              check=True,
+          )
+          PY
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - validate-linux-wheel
+      - build-linux-wheel
+      - build-native-wheels
+      - build-sdist
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/project/cdg_python_client/
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

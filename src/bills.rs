@@ -3,6 +3,64 @@ use serde::{Deserialize, Serialize};
 
 use crate::members::Sponsor;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct SourceSystem {
+    #[pyo3(get)]
+    pub code: Option<i32>,
+
+    #[pyo3(get)]
+    pub name: Option<String>,
+}
+
+#[pymethods]
+impl SourceSystem {
+    fn __repr__(&self) -> String {
+        format!("SourceSystem(code={:?}, name={:?})", self.code, self.name)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct ActionCommittee {
+    #[pyo3(get)]
+    pub name: Option<String>,
+
+    #[pyo3(get)]
+    #[serde(rename = "systemCode")]
+    pub system_code: Option<String>,
+
+    #[pyo3(get)]
+    pub url: Option<String>,
+}
+
+#[pymethods]
+impl ActionCommittee {
+    fn __repr__(&self) -> String {
+        format!(
+            "ActionCommittee(name={:?}, system_code={:?})",
+            self.name, self.system_code
+        )
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct CountLink {
+    #[pyo3(get)]
+    pub count: Option<i32>,
+
+    #[pyo3(get)]
+    pub url: Option<String>,
+}
+
+#[pymethods]
+impl CountLink {
+    fn __repr__(&self) -> String {
+        format!("CountLink(count={:?}, url={:?})", self.count, self.url)
+    }
+}
+
 // Response structures
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
@@ -10,7 +68,7 @@ pub struct LatestAction {
     #[pyo3(get)]
     #[serde(rename = "actionDate")]
     pub action_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub text: Option<String>,
 }
@@ -30,37 +88,37 @@ impl LatestAction {
 pub struct Bill {
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "latestAction")]
     pub latest_action: Option<LatestAction>,
-    
+
     #[pyo3(get)]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "originChamber")]
     pub origin_chamber: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "originChamberCode")]
     pub origin_chamber_code: Option<String>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub bill_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDateIncludingText")]
     pub update_date_including_text: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -85,7 +143,7 @@ pub struct BillsResponse {
 pub struct Law {
     #[pyo3(get)]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub law_type: Option<String>,
@@ -124,51 +182,51 @@ pub struct RelatedCount {
 pub struct BillDetail {
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "latestAction")]
     pub latest_action: Option<LatestAction>,
-    
+
     #[pyo3(get)]
     pub number: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "originChamber")]
     pub origin_chamber: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "originChamberCode")]
     pub origin_chamber_code: Option<String>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub bill_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDateIncludingText")]
     pub update_date_including_text: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "introducedDate")]
     pub introduced_date: Option<String>,
-    
+
     #[pyo3(get)]
     pub sponsors: Option<Vec<Sponsor>>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "policyArea")]
     pub policy_area: Option<PolicyArea>,
-    
+
     #[pyo3(get)]
     pub laws: Option<Vec<Law>>,
 }
@@ -194,17 +252,28 @@ pub struct Action {
     #[pyo3(get)]
     #[serde(rename = "actionCode")]
     pub action_code: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "actionDate")]
     pub action_date: Option<String>,
-    
+
+    #[pyo3(get)]
+    #[serde(rename = "actionTime")]
+    pub action_time: Option<String>,
+
     #[pyo3(get)]
     pub text: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub action_type: Option<String>,
+
+    #[pyo3(get)]
+    #[serde(rename = "sourceSystem")]
+    pub source_system: Option<SourceSystem>,
+
+    #[pyo3(get)]
+    pub committee: Option<ActionCommittee>,
 }
 
 #[pymethods]
@@ -227,18 +296,28 @@ pub struct ActionsResponse {
 pub struct Amendment {
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "latestAction")]
     pub latest_action: Option<LatestAction>,
-    
+
     #[pyo3(get)]
     pub number: Option<String>,
-    
+
+    #[pyo3(get)]
+    pub description: Option<String>,
+
+    #[pyo3(get)]
+    pub purpose: Option<String>,
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub amendment_type: Option<String>,
-    
+
+    #[pyo3(get)]
+    #[serde(rename = "updateDate")]
+    pub update_date: Option<String>,
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -260,14 +339,79 @@ pub struct AmendmentsResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
+pub struct AmendmentDetail {
+    #[pyo3(get)]
+    pub actions: Option<CountLink>,
+
+    #[pyo3(get)]
+    #[serde(rename = "amendedBill")]
+    pub amended_bill: Option<BillDetail>,
+
+    #[pyo3(get)]
+    pub chamber: Option<String>,
+
+    #[pyo3(get)]
+    pub congress: Option<i32>,
+
+    #[pyo3(get)]
+    pub description: Option<String>,
+
+    #[pyo3(get)]
+    #[serde(rename = "latestAction")]
+    pub latest_action: Option<LatestAction>,
+
+    #[pyo3(get)]
+    pub number: Option<String>,
+
+    #[pyo3(get)]
+    pub sponsors: Option<Vec<Sponsor>>,
+
+    #[pyo3(get)]
+    #[serde(rename = "submittedDate")]
+    pub submitted_date: Option<String>,
+
+    #[pyo3(get)]
+    #[serde(rename = "textVersions")]
+    pub text_versions: Option<CountLink>,
+
+    #[pyo3(get)]
+    #[serde(rename = "type")]
+    pub amendment_type: Option<String>,
+
+    #[pyo3(get)]
+    #[serde(rename = "updateDate")]
+    pub update_date: Option<String>,
+}
+
+#[pymethods]
+impl AmendmentDetail {
+    fn __repr__(&self) -> String {
+        format!(
+            "AmendmentDetail(congress={:?}, number={:?}, type={:?})",
+            self.congress, self.number, self.amendment_type
+        )
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AmendmentDetailResponse {
+    pub amendment: AmendmentDetail,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
 pub struct Committee {
     #[pyo3(get)]
     pub name: Option<String>,
-    
+
+    #[pyo3(get)]
+    #[serde(rename = "referralDate")]
+    pub referral_date: Option<String>,
+
     #[pyo3(get)]
     #[serde(rename = "systemCode")]
     pub system_code: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -275,7 +419,10 @@ pub struct Committee {
 #[pymethods]
 impl Committee {
     fn __repr__(&self) -> String {
-        format!("Committee(name={:?}, system_code={:?})", self.name, self.system_code)
+        format!(
+            "Committee(name={:?}, system_code={:?})",
+            self.name, self.system_code
+        )
     }
 }
 
@@ -290,29 +437,29 @@ pub struct Cosponsor {
     #[pyo3(get)]
     #[serde(rename = "bioguideId")]
     pub bioguide_id: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "firstName")]
     pub first_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "lastName")]
     pub last_name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "fullName")]
     pub full_name: Option<String>,
-    
+
     #[pyo3(get)]
     pub state: Option<String>,
-    
+
     #[pyo3(get)]
     pub party: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "sponsorshipDate")]
     pub sponsorship_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "isOriginalCosponsor")]
     pub is_original_cosponsor: Option<bool>,
@@ -338,24 +485,24 @@ pub struct CosponsorsResponse {
 pub struct RelatedBill {
     #[pyo3(get)]
     pub congress: Option<i32>,
-    
+
     #[pyo3(get)]
     pub number: Option<i32>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub bill_type: Option<String>,
-    
+
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "latestAction")]
     pub latest_action: Option<LatestAction>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "relationshipDetails")]
     pub relationship_details: Option<Vec<RelationshipDetail>>,
@@ -377,7 +524,7 @@ pub struct RelationshipDetail {
     #[pyo3(get)]
     #[serde(rename = "identifiedBy")]
     pub identified_by: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub relationship_type: Option<String>,
@@ -404,7 +551,7 @@ pub struct RelatedBillsResponse {
 pub struct Subject {
     #[pyo3(get)]
     pub name: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
@@ -431,18 +578,18 @@ pub struct Summary {
     #[pyo3(get)]
     #[serde(rename = "actionDate")]
     pub action_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "actionDesc")]
     pub action_desc: Option<String>,
-    
+
     #[pyo3(get)]
     pub text: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "updateDate")]
     pub update_date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "versionCode")]
     pub version_code: Option<String>,
@@ -468,11 +615,11 @@ pub struct SummariesResponse {
 pub struct TextVersion {
     #[pyo3(get)]
     pub date: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub text_type: Option<String>,
-    
+
     #[pyo3(get)]
     pub formats: Option<Vec<TextFormat>>,
 }
@@ -493,7 +640,7 @@ pub struct TextFormat {
     #[pyo3(get)]
     #[serde(rename = "type")]
     pub format_type: Option<String>,
-    
+
     #[pyo3(get)]
     pub url: Option<String>,
 }
@@ -516,30 +663,34 @@ pub struct TextVersionsResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
-pub struct Title {
+pub struct BillTitle {
     #[pyo3(get)]
     pub title: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "titleType")]
     pub title_type: Option<String>,
-    
+
     #[pyo3(get)]
     #[serde(rename = "titleTypeCode")]
     pub title_type_code: Option<i32>,
+
+    #[pyo3(get)]
+    #[serde(rename = "updateDate")]
+    pub update_date: Option<String>,
 }
 
 #[pymethods]
-impl Title {
+impl BillTitle {
     fn __repr__(&self) -> String {
         format!(
-            "Title(title={:?}, type={:?})",
-            self.title, self.title_type
+            "BillTitle(title={:?}, type={:?}, update_date={:?})",
+            self.title, self.title_type, self.update_date
         )
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TitlesResponse {
-    pub titles: Vec<Title>,
+    pub titles: Vec<BillTitle>,
 }
