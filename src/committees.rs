@@ -32,10 +32,9 @@ where
         Value::Object(value) => serde_json::from_value(Value::Object(value))
             .map_err(|error| Error::custom(error.to_string())),
         Value::Array(values) => {
-            let value = values
-                .into_iter()
-                .next()
-                .ok_or_else(|| Error::custom("expected committeePrint object or non-empty array"))?;
+            let value = values.into_iter().next().ok_or_else(|| {
+                Error::custom("expected committeePrint object or non-empty array")
+            })?;
             serde_json::from_value(value).map_err(|error| Error::custom(error.to_string()))
         }
         other => Err(Error::custom(format!(
