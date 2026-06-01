@@ -8,8 +8,13 @@ edition = "2021"
 name = "cdg_python_client"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]
+test-support = ["pyo3/auto-initialize"]
+
 [dependencies]
-pyo3 = { version = "0.23.3", features = ["extension-module", "abi3-py38"] }
+pyo3 = { version = "0.23.3", features = ["abi3-py38"] }
 pyo3-async-runtimes = { version = "0.23", features = ["tokio-runtime"] }
 reqwest = { version = "0.12", default-features = false, features = ["charset", "http2", "json", "rustls-tls", "system-proxy"] }
 serde = { version = "1.0", features = ["derive"] }

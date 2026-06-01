@@ -98,7 +98,7 @@ jobs:
         run: maturin develop --release
 
       - name: Run Rust tests
-        run: cargo test --tests -q
+        run: cargo test --tests --no-default-features --features test-support -q
 
   test:
     runs-on: ubuntu-latest
