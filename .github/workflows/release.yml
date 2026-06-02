@@ -209,8 +209,28 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pip-audit
-        run: python -m pip install pip-audit
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Create virtual environment
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import venv
+
+          venv_dir = pathlib.Path.cwd() / ".venv"
+          venv.EnvBuilder(with_pip=True).create(venv_dir)
+
+          scripts_dir = venv_dir / ("Scripts" if os.name == "nt" else "bin")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"VIRTUAL_ENV={venv_dir}\n")
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as path_file:
+              path_file.write(f"{scripts_dir}\n")
+          PY
+
+      - name: Install audit dependencies
+        run: python -m pip install -e . pip-audit
 
       - name: Run pip-audit
         run: python -m pip_audit
