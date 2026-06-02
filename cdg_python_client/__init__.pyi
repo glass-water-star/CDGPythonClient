@@ -1392,7 +1392,7 @@ class AsyncCDGPythonClient:
         chamber: str,
         committee_code: str,
         format: Optional[str] = None,
-    ) -> Any:
+    ) -> CommitteeDetailInfo:
         ...
 
     async def get_committee_bills(

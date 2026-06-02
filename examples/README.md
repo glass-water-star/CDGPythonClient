@@ -2,17 +2,18 @@
 
 This folder contains example scripts demonstrating the Congress.gov API client.
 
-## Quick Test
+## Quick Example
 
-Run a quick test to verify the implementation works:
+Run a quick example to verify the implementation works:
 
 ```bash
 # First, build the package
 pip install maturin
 maturin develop --release
 
-# Then run the quick test
-python examples/quick_test.py YOUR_API_KEY
+# Then run the example script
+export CONGRESS_API_KEY="YOUR_API_KEY"
+python examples/test_bills.py
 ```
 
 Replace `YOUR_API_KEY` with your actual Congress.gov API key. Get one at https://api.data.gov/signup/
@@ -28,5 +29,4 @@ python examples/test_bills.py
 
 ## Example Scripts
 
-- **quick_test.py** - Simple script to quickly verify the implementation works
-- **test_bills.py** - Comprehensive test of all Bills API endpoints
+- **test_bills.py** - Example script covering Bills API endpoint usage

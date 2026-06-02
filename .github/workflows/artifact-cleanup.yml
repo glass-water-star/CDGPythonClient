@@ -1,0 +1,51 @@
+name: artifact-cleanup
+
+on:
+  schedule:
+    - cron: "30 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Delete old artifacts
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        with:
+          script: |
+            const cutoffDays = 14;
+            const cutoff = Date.now() - cutoffDays * 24 * 60 * 60 * 1000;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
+              owner,
+              repo,
+              per_page: 100
+            });
+
+            const oldArtifacts = artifacts.filter((artifact) => {
+              if (artifact.expired) return false;
+              const created = new Date(artifact.created_at).getTime();
+              return created < cutoff;
+            });
+
+            core.info(`Found ${oldArtifacts.length} artifacts older than ${cutoffDays} days.`);
+
+            for (const artifact of oldArtifacts) {
+              core.info(`Deleting artifact ${artifact.id} (${artifact.name}) created ${artifact.created_at}`);
+              await github.rest.actions.deleteArtifact({
+                owner,
+                repo,
+                artifact_id: artifact.id
+              });
+            }
