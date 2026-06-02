@@ -1,15 +1,19 @@
 import functools
+import importlib
 import logging
 from urllib.parse import parse_qs, urlparse
 
-from .cdg_python_client import *
+_native_module = importlib.import_module("cdg_python_client.cdg_python_client")
 
-_NativeCDGPythonClient = CDGPythonClient
-_NativeAsyncClientCore = AsyncClientCore
-_native_configure_client_retries = configure_client_retries
-_native_get_client_retry_config = get_client_retry_config
+for _export_name in getattr(_native_module, "__all__", ()):
+    globals()[_export_name] = getattr(_native_module, _export_name)
 
-Title = BillTitle
+_NativeCDGPythonClient = _native_module.CDGPythonClient
+_NativeAsyncClientCore = _native_module.AsyncClientCore
+_native_configure_client_retries = _native_module.configure_client_retries
+_native_get_client_retry_config = _native_module.get_client_retry_config
+
+Title = _native_module.BillTitle
 
 def _resolve_link_url(link_or_url, *, url_index=0):
     if isinstance(link_or_url, str):
